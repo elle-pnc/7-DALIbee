@@ -2041,16 +2041,16 @@
         let isRfidConfigured = false;
         let isLoggingIn = false; // Prevent multiple login attempts
         
-        // Sample product data (will be loaded from Firebase)
+        // Sample product data (will be loaded from Firebase) - VAT-inclusive prices
         const products = [
-            { id: "burger", name: "cheezburger", price: 49.99, stock: 50, emoji: "🍔", image: "cheezburger.svg" },
-            { id: "cola", name: "bloxy cola", price: 38.00, stock: 30, emoji: "🥤", image: "bloxy cola.svg" },
-            { id: "cake", name: "cake", price: 45.00, stock: 25, emoji: "🍰", image: "cake.svg" },
-            { id: "milk", name: "chocolate milk", price: 28.00, stock: 20, emoji: "🥛", image: "chocolate milk.svg" },
-            { id: "pizza", name: "pizza!", price: 68.00, stock: 15, emoji: "🍕", image: "pizza!.svg" },
-            { id: "tacos", name: "tacos", price: 89.00, stock: 35, emoji: "🌮", image: "tacos.svg" },
-            { id: "turkey", name: "turkey leg", price: 99.00, stock: 18, emoji: "🦃", image: "turkey leg.svg" },
-            { id: "sandwich", name: "sandwich", price: 25.00, stock: 40, emoji: "🥪", image: "sandwitch.svg" }
+            { id: "burger", name: "cheezburger", price: 55.99, stock: 50, emoji: "🍔", image: "cheezburger.svg" },
+            { id: "cola", name: "bloxy cola", price: 42.56, stock: 30, emoji: "🥤", image: "bloxy cola.svg" },
+            { id: "cake", name: "cake", price: 50.40, stock: 25, emoji: "🍰", image: "cake.svg" },
+            { id: "milk", name: "chocolate milk", price: 31.36, stock: 20, emoji: "🥛", image: "chocolate milk.svg" },
+            { id: "pizza", name: "pizza!", price: 76.16, stock: 15, emoji: "🍕", image: "pizza!.svg" },
+            { id: "tacos", name: "tacos", price: 99.68, stock: 35, emoji: "🌮", image: "tacos.svg" },
+            { id: "turkey", name: "turkey leg", price: 110.88, stock: 18, emoji: "🦃", image: "turkey leg.svg" },
+            { id: "sandwich", name: "sandwich", price: 28.00, stock: 40, emoji: "🥪", image: "sandwitch.svg" }
         ];
         
         let currentOrder = [];
@@ -2621,6 +2621,41 @@
             }
         }
         
+        // Send receipt data to Firebase for ESP32 thermal printer
+        async function sendReceiptToFirebase(transaction) {
+            try {
+                if (!currentUser) {
+                    console.log('No user logged in, skipping receipt upload');
+                    return;
+                }
+                
+                // Create receipt data for ESP32
+                const receiptData = {
+                    receiptId: transaction.receiptId,
+                    date: transaction.date,
+                    cashier: transaction.cashier,
+                    items: transaction.items,
+                    subtotal: transaction.subtotal,
+                    vat: transaction.vat,
+                    total: transaction.total,
+                    payment: transaction.payment,
+                    change: transaction.change,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    status: 'pending_print' // ESP32 will change this to 'printed' when done
+                };
+                
+                // Save to receipts collection for ESP32 to fetch
+                const receiptsRef = database.ref('receipts');
+                await receiptsRef.push(receiptData);
+                
+                console.log('Receipt data sent to Firebase for ESP32 printing');
+                
+            } catch (error) {
+                console.error('Error sending receipt to Firebase:', error);
+                // Don't throw error - receipt generation should continue even if Firebase fails
+            }
+        }
+        
         // Load summary statistics from database
         async function loadSummaryStats() {
             try {
@@ -2696,14 +2731,14 @@
                     console.log('Falling back to local products with images');
                     products.length = 0;
                     const localProducts = [
-                        { id: "burger", name: "cheezburger", price: 49.99, stock: 50, emoji: "🍔", image: "cheezburger.svg" },
-                        { id: "cola", name: "bloxy cola", price: 38.00, stock: 30, emoji: "🥤", image: "bloxy cola.svg" },
-                        { id: "cake", name: "cake", price: 45.00, stock: 25, emoji: "🍰", image: "cake.svg" },
-                        { id: "milk", name: "chocolate milk", price: 28.00, stock: 20, emoji: "🥛", image: "chocolate milk.svg" },
-                        { id: "pizza", name: "pizza!", price: 68.00, stock: 15, emoji: "🍕", image: "pizza!.svg" },
-                        { id: "tacos", name: "tacos", price: 89.00, stock: 35, emoji: "🌮", image: "tacos.svg" },
-                        { id: "turkey", name: "turkey leg", price: 99.00, stock: 18, emoji: "🦃", image: "turkey leg.svg" },
-                        { id: "sandwich", name: "sandwich", price: 25.00, stock: 40, emoji: "🥪", image: "sandwitch.svg" }
+                        { id: "burger", name: "cheezburger", price: 55.99, stock: 50, emoji: "🍔", image: "cheezburger.svg" },
+                        { id: "cola", name: "bloxy cola", price: 42.56, stock: 30, emoji: "🥤", image: "bloxy cola.svg" },
+                        { id: "cake", name: "cake", price: 50.40, stock: 25, emoji: "🍰", image: "cake.svg" },
+                        { id: "milk", name: "chocolate milk", price: 31.36, stock: 20, emoji: "🥛", image: "chocolate milk.svg" },
+                        { id: "pizza", name: "pizza!", price: 76.16, stock: 15, emoji: "🍕", image: "pizza!.svg" },
+                        { id: "tacos", name: "tacos", price: 99.68, stock: 35, emoji: "🌮", image: "tacos.svg" },
+                        { id: "turkey", name: "turkey leg", price: 110.88, stock: 18, emoji: "🦃", image: "turkey leg.svg" },
+                        { id: "sandwich", name: "sandwich", price: 28.00, stock: 40, emoji: "🥪", image: "sandwitch.svg" }
                     ];
                     products.push(...localProducts);
                 }
@@ -2711,14 +2746,14 @@
                 // Use default products if Firebase fails
                 products.length = 0;
                 const defaultProducts = [
-                    { id: "burger", name: "cheezburger", price: 49.99, stock: 50, emoji: "🍔", image: "cheezburger.svg" },
-                    { id: "cola", name: "bloxy cola", price: 38.00, stock: 30, emoji: "🥤", image: "bloxy cola.svg" },
-                    { id: "cake", name: "cake", price: 45.00, stock: 25, emoji: "🍰", image: "cake.svg" },
-                    { id: "milk", name: "chocolate milk", price: 28.00, stock: 20, emoji: "🥛", image: "chocolate milk.svg" },
-                    { id: "pizza", name: "pizza!", price: 68.00, stock: 15, emoji: "🍕", image: "pizza!.svg" },
-                    { id: "tacos", name: "tacos", price: 89.00, stock: 35, emoji: "🌮", image: "tacos.svg" },
-                    { id: "turkey", name: "turkey leg", price: 99.00, stock: 18, emoji: "🦃", image: "turkey leg.svg" },
-                    { id: "sandwich", name: "sandwich", price: 25.00, stock: 40, emoji: "🥪", image: "sandwitch.svg" }
+                    { id: "burger", name: "cheezburger", price: 55.99, stock: 50, emoji: "🍔", image: "cheezburger.svg" },
+                    { id: "cola", name: "bloxy cola", price: 42.56, stock: 30, emoji: "🥤", image: "bloxy cola.svg" },
+                    { id: "cake", name: "cake", price: 50.40, stock: 25, emoji: "🍰", image: "cake.svg" },
+                    { id: "milk", name: "chocolate milk", price: 31.36, stock: 20, emoji: "🥛", image: "chocolate milk.svg" },
+                    { id: "pizza", name: "pizza!", price: 76.16, stock: 15, emoji: "🍕", image: "pizza!.svg" },
+                    { id: "tacos", name: "tacos", price: 99.68, stock: 35, emoji: "🌮", image: "tacos.svg" },
+                    { id: "turkey", name: "turkey leg", price: 110.88, stock: 18, emoji: "🦃", image: "turkey leg.svg" },
+                    { id: "sandwich", name: "sandwich", price: 28.00, stock: 40, emoji: "🥪", image: "sandwitch.svg" }
                 ];
                 products.push(...defaultProducts);
                 // Using default products
@@ -2730,14 +2765,14 @@
             try {
                 const productsRef = database.ref('products');
                 const defaultProducts = {
-                    "burger": { name: "cheezburger", price: 49.99, stock: 50, emoji: "🍔", image: "cheezburger.svg" },
-                    "cola": { name: "bloxy cola", price: 38.00, stock: 30, emoji: "🥤", image: "bloxy cola.svg" },
-                    "cake": { name: "cake", price: 45.00, stock: 25, emoji: "🍰", image: "cake.svg" },
-                    "milk": { name: "chocolate milk", price: 28.00, stock: 20, emoji: "🥛", image: "chocolate milk.svg" },
-                    "pizza": { name: "pizza!", price: 68.00, stock: 15, emoji: "🍕", image: "pizza!.svg" },
-                    "tacos": { name: "tacos", price: 89.00, stock: 35, emoji: "🌮", image: "tacos.svg" },
-                    "turkey": { name: "turkey leg", price: 99.00, stock: 18, emoji: "🦃", image: "turkey leg.svg" },
-                    "sandwich": { name: "sandwich", price: 25.00, stock: 40, emoji: "🥪", image: "sandwitch.svg" }
+                    "burger": { name: "cheezburger", price: 55.99, stock: 50, emoji: "🍔", image: "cheezburger.svg" },
+                    "cola": { name: "bloxy cola", price: 42.56, stock: 30, emoji: "🥤", image: "bloxy cola.svg" },
+                    "cake": { name: "cake", price: 50.40, stock: 25, emoji: "🍰", image: "cake.svg" },
+                    "milk": { name: "chocolate milk", price: 31.36, stock: 20, emoji: "🥛", image: "chocolate milk.svg" },
+                    "pizza": { name: "pizza!", price: 76.16, stock: 15, emoji: "🍕", image: "pizza!.svg" },
+                    "tacos": { name: "tacos", price: 99.68, stock: 35, emoji: "🌮", image: "tacos.svg" },
+                    "turkey": { name: "turkey leg", price: 110.88, stock: 18, emoji: "🦃", image: "turkey leg.svg" },
+                    "sandwich": { name: "sandwich", price: 28.00, stock: 40, emoji: "🥪", image: "sandwitch.svg" }
                 };
                 
                 await productsRef.set(defaultProducts);
@@ -3237,6 +3272,9 @@
                 // Save summary stats to database
                 await saveSummaryStats();
                 
+                // Send receipt data to Firebase for ESP32 thermal printer
+                await sendReceiptToFirebase(transaction);
+                
                 hideLoading();
                 
                 // Generate receipt
@@ -3595,11 +3633,11 @@
             updateOrderDisplay();
         }
         
-        // Update order summary with VAT calculation
+        // Update order summary with VAT-inclusive pricing
         function updateOrderSummary() {
-            const subtotal = currentOrder.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            const vat = subtotal * 0.12; // 12% VAT
-            const total = subtotal + vat;
+            const total = currentOrder.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const subtotal = total / 1.12; // Calculate subtotal from VAT-inclusive total
+            const vat = total - subtotal; // Calculate VAT amount
             
             document.getElementById('subtotal').textContent = `₱${subtotal.toFixed(2)}`;
             document.getElementById('vat').textContent = `₱${vat.toFixed(2)}`;
