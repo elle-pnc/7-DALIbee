@@ -2110,6 +2110,19 @@
         
         // Global variables
         let currentUser = null;
+        // Lock status helper
+        function setSystemLockStatus(state) {
+            try {
+                const uid = currentUser && currentUser.uid ? currentUser.uid : 'anonymous';
+                const statusRef = database.ref(`status/${uid}`);
+                return statusRef.set({
+                    state: state,
+                    updatedAt: firebase.database.ServerValue.TIMESTAMP
+                });
+            } catch (err) {
+                // Non-fatal if offline; ignore
+            }
+        }
         let rfidId = null;
         let isRfidConfigured = false;
         let isLoggingIn = false; // Prevent multiple login attempts
@@ -2388,6 +2401,8 @@
                 if (user) {
                     currentUser = user;
                     // User signed in
+                    // Default system state: locked on sign-in
+                    setSystemLockStatus('locked');
                 } else {
                     currentUser = null;
                     // User signed out
@@ -3355,6 +3370,8 @@
                 
                 // Show receipt modal
                 document.getElementById('receiptModal').style.display = 'flex';
+                // Unlock system when receipt is shown after successful transaction
+                setSystemLockStatus('unlocked');
                 
                 resetSleepTimer();
                 
@@ -3822,6 +3839,8 @@
             if (closeBtn.textContent === 'OK - Return to Homepage') {
                 // This is a new order, complete it
                 completeOrder();
+                // Lock system when returning to homepage
+                setSystemLockStatus('locked');
             } else {
                 // This is from history, just close
                 // Do nothing special
@@ -3968,6 +3987,51 @@
             
             return stats;
         }
+        // Fullscreen toggle utilities
+        function isFullscreen() {
+            return document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+        }
+        function requestFs(element) {
+            if (element.requestFullscreen) return element.requestFullscreen();
+            if (element.webkitRequestFullscreen) return element.webkitRequestFullscreen();
+            if (element.msRequestFullscreen) return element.msRequestFullscreen();
+        }
+        function exitFs() {
+            if (document.exitFullscreen) return document.exitFullscreen();
+            if (document.webkitExitFullscreen) return document.webkitExitFullscreen();
+            if (document.msExitFullscreen) return document.msExitFullscreen();
+        }
+        function setFsButtonState(active) {
+            const btn = document.getElementById('fullscreenToggle');
+            if (!btn) return;
+            btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+            const label = btn.querySelector('.fs-label');
+            const icon = btn.querySelector('.fs-icon');
+            if (label) label.textContent = active ? 'Exit Fullscreen' : 'Fullscreen';
+            if (icon) icon.textContent = active ? '⤢' : '⤡';
+        }
+        function toggleFullscreen() {
+            if (isFullscreen()) {
+                exitFs();
+            } else {
+                requestFs(document.documentElement);
+            }
+        }
+        document.addEventListener('fullscreenchange', () => setFsButtonState(Boolean(isFullscreen())));
+        document.addEventListener('webkitfullscreenchange', () => setFsButtonState(Boolean(isFullscreen())));
+        document.addEventListener('msfullscreenchange', () => setFsButtonState(Boolean(isFullscreen())));
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('fullscreenToggle');
+            if (btn) {
+                btn.addEventListener('click', toggleFullscreen);
+                setFsButtonState(Boolean(isFullscreen()));
+            }
+        });
     </script>
+    <div id="fullscreenToggle" class="pixel-btn fullscreen-toggle" aria-pressed="false" title="Toggle Fullscreen">
+        <span class="fs-icon">⤡</span>
+        <span class="fs-label">Fullscreen</span>
+    </div>
+<!-- Keep as the last element before body close so it floats above UI -->
 </body>
 </html>
