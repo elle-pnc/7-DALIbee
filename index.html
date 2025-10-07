@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>7-Evelyn POS System</title>
+    <title>7-DALIbee POS System</title>
+    <link rel="icon" type="image/svg+xml" href="Logo.svg">
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -285,7 +286,7 @@
         }
         
         .main-logo {
-            height: 80px;
+            height: 120px;
             width: auto;
             max-width: 300px;
             object-fit: contain;
@@ -302,6 +303,56 @@
         
         .header p {
             font-size: 1.2em;
+            opacity: 0.8;
+        }
+        
+        /* Cashier Avatar Styles */
+        .cashier-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .cashier-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 3px solid #4CAF50;
+            box-shadow: 
+                0 0 20px rgba(76, 175, 80, 0.5),
+                inset 0 0 0 2px rgba(255,255,255,0.1);
+            object-fit: cover;
+            transition: all 0.3s ease;
+            background: linear-gradient(145deg, #2a2a5c, #1e1e42);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+        }
+        
+        .cashier-avatar:hover {
+            transform: scale(1.1);
+            box-shadow: 
+                0 0 30px rgba(76, 175, 80, 0.8),
+                inset 0 0 0 2px rgba(255,255,255,0.2);
+        }
+        
+        .cashier-info {
+            text-align: left;
+        }
+        
+        .cashier-name {
+            font-size: 1.4em;
+            color: #4CAF50;
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+        }
+        
+        .cashier-role {
+            font-size: 1em;
+            color: #e8e8e8;
             opacity: 0.8;
         }
         
@@ -1691,7 +1742,7 @@
         <div class="login-container">
             <div class="login-header">
                 <div class="logo-container">
-                    <img src="Logo.svg" alt="7-Evelyn POS" class="login-logo">
+                    <img src="Logo.svg" alt="7-DALIbee POS" class="login-logo">
                 </div>
                 <p>Cashier Login</p>
             </div>
@@ -1786,7 +1837,7 @@
         <div class="container">
             <div class="header">
                 <div class="logo-container">
-                    <img src="Logo.svg" alt="7-Evelyn POS" class="main-logo">
+                    <img src="Logo_2.svg" alt="7-DALIbee POS" class="main-logo">
                 </div>
                 <p>RFID-Based Point of Sale System</p>
             </div>
@@ -1984,7 +2035,7 @@
     <div class="receipt-modal" id="receiptModal">
         <div class="receipt">
             <div class="receipt-header">
-                <h2>🏪 7-EVELYN</h2>
+                <h2>🏪 7-DALIBEE</h2>
                 <p>Digital Receipt</p>
                 <p id="receiptId" style="font-weight: bold; color: #333;"></p>
                 <p id="receiptDate"></p>
@@ -2288,7 +2339,7 @@
                         <div class="product-status" id="productStatus${product.id}">
                             ${isSoldOut ? 
                                 '<span class="sold-out-indicator">❌ OUT OF STOCK</span>' : 
-                                `<span class="rfid-indicator">${isRfidConfigured ? '📡 Ready for RFID' : '⚠️ RFID Not Configured'}</span>`
+                                `<span class="rfid-indicator">📡 Ready for RFID</span>`
                             }
                         </div>
                     </div>
@@ -3819,7 +3870,7 @@
                         animation: pulse 1s ease-in-out infinite;
                     ">✅</div>
                     <h2 style="color: #4CAF50; margin-bottom: 15px;">Order Completed!</h2>
-                    <p style="margin-bottom: 20px;">Thank you for your purchase at 7-Evelyn!</p>
+                    <p style="margin-bottom: 20px;">Thank you for your purchase at 7-DALIbee!</p>
                     <button class="pixel-btn" onclick="this.parentElement.parentElement.remove()">
                         Continue Shopping
                     </button>
