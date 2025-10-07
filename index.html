@@ -203,6 +203,28 @@
             transition: left 0.5s;
         }
         
+        /* Fullscreen floating button */
+        .fullscreen-toggle {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            z-index: 3000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+        }
+        .fullscreen-toggle .fs-icon {
+            width: 18px;
+            height: 18px;
+            display: inline-block;
+        }
+        .fullscreen-toggle[aria-pressed="true"] {
+            background: linear-gradient(145deg, #1f3a93, #162a6a);
+            border-color: rgba(86, 156, 214, 0.4);
+        }
+
         .pixel-btn:hover::before {
             left: 100%;
         }
@@ -3352,9 +3374,13 @@
             cartRef.on('child_added', (snapshot) => {
                 const cartItem = snapshot.val();
                 
-                if (cartItem && cartItem.productId && cartItem.isValid) {
-                    console.log('📡 Cart item detected in database:', cartItem.productId);
-                    handleDatabaseCartItem(cartItem);
+                // Support both legacy { productId, isValid } and new { createdAt, source, tag }
+                const normalizedProductId = cartItem ? (cartItem.productId || cartItem.tag || cartItem.name || '').toString() : '';
+                const shouldProcess = !!normalizedProductId && (cartItem.isValid === undefined || cartItem.isValid === true);
+                
+                if (shouldProcess) {
+                    console.log('📡 Cart item detected in database:', normalizedProductId);
+                    handleDatabaseCartItem({ ...cartItem, productId: normalizedProductId });
                     
                     // Mark cart item as processed
                     snapshot.ref.update({ 
